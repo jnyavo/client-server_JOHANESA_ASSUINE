@@ -4,6 +4,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <unistd.h>
+#include <string.h>
 
 
 int main() {
@@ -35,6 +36,28 @@ int main() {
 	
 	//Affichage de la reponse
 	printf("le message est : %s \n",reponse_serv);
+	
+
+	char last_message[256] = ""; 
+	
+	while(1){
+	
+	recv(cli_socket, reponse_serv, sizeof(reponse_serv),0);
+	
+	if(strcmp(last_message,reponse_serv) == 0)
+	break;
+	printf("le message est : %s \n",reponse_serv);
+	
+	
+
+	strcpy(last_message,reponse_serv);
+	
+	}
+
+
+
+	
+	
 	
 	//fermeture du socket
 	close(cli_socket);

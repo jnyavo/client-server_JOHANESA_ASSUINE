@@ -9,14 +9,18 @@
 #include <dirent.h>
 
 void show_files(char* chemin);
-void show_file(char* chemin);
+void get_files(char* chemin, char ***nom_fichier);
 
 int main() {
 
 	
-	char message[256], fichier[256]; 
-	message = "Bienvenue sur le serveur";
-	show_file(".",fichier);
+	char message[256] = "Bienvenue sur le serveur";
+	char * pointer_message = message; 
+	char  *nom_fichier[256]= {"test", "test"};
+	char  **pointer = nom_fichier;
+	
+	
+	get_files(".",&pointer);
 
 	//initialisation du socket serveur 
 	int serv_socket;
@@ -55,26 +59,36 @@ int main() {
 	
 	//envoie de la liste des documents
 	
+	
+
+	for (int i=0;nom_fichier[i];i++){
+	pointer_message = nom_fichier[i];
+	printf("le fichier est: %s \n",pointer_message);
+	
+	send(client_socket,pointer_message, sizeof(message),0);
+	}
 
 	//fermeture du socket serveur
 	int rc = close(serv_socket);
 
 	return 0;
+
 	
 }
 
 
 
-}
-
-void show_file(char* chemin,char* nom_fichier){
+void get_files(char* chemin,char ***nom_fichier){
   DIR *d;
   struct dirent *dir;
   d = opendir(chemin);
   if (d) {
-    if ((dir = readdir(d)) != NULL) {
-      nom_fichier = dir->d_name;
+    for(int i=0; (dir = readdir(d)) != NULL; i++) {
+	
+      (*nom_fichier)[i] = dir->d_name;
+	
     }
+	
     closedir(d);
 }
 
