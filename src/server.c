@@ -15,7 +15,7 @@ void get_files(char* chemin, char ***nom_fichier);
 void chat_server(int sockfd, char ***nom_fichier);
 void end_message(int client_socket);
 void send_help(int client_socket);
-
+int Envoyer_fichier(int connfd, char *fname);
 
 //int exec_cmd(int client_socket,char *cmd);
 
@@ -43,9 +43,9 @@ void func(int sockfd)
 int main() {
 
 	
-	char message[256] = "Bienvenue sur le serveur";
+	char message[MAX] = "Bienvenue sur le serveur";
 	char * pointer_message = message; 
-	char  *nom_fichier[256]= {"test", "test"};
+	char  *nom_fichier[MAX]= {"test", "test"};
 	char  **pointer = nom_fichier;
 	
 	
@@ -121,6 +121,7 @@ void chat_server(int sockfd, char ***nom_fichier)
 	//Traitement des requetes
 	while (1) { 
 		//actualisation de la liste de documents
+		bzero(*nom_fichier,MAX);
 		get_files(".",nom_fichier);
 
 		bzero(buff, sizeof(buff)); 
@@ -131,15 +132,15 @@ void chat_server(int sockfd, char ***nom_fichier)
 		bzero(buff, sizeof(buff));
 		printf("Envoi de la liste...\n");
 			for (int i=0;(*nom_fichier)[i];i++){
-				//Ne pas envoyer . et ..
+				
 				if((strcmp((*nom_fichier)[i],".")==0) || (strcmp((*nom_fichier)[i],"..")==0))
-				continue;
+				continue; //Ne pas envoyer . et ..
 				bzero(buff, sizeof(buff)); 
 				strcpy(buff,(*nom_fichier)[i]);
 				printf("le fichier est: %s \n",buff);
 				write(sockfd,buff, sizeof(buff));
 			}
-		//Fin de message
+			//Fin de message
 		end_message(sockfd);
 		}
 		else if (strcmp(buff,"rm") == 0){
@@ -172,10 +173,20 @@ void chat_server(int sockfd, char ***nom_fichier)
 		}
 		else if (strcmp(buff,"get") == 0){
 		//Envoyer le document
-			
-			strcpy(buff,"test");
+			bzero(buff, sizeof(buff));
+			//Obtenir le nom du document a telecharger
+			printf("Telechargement\n");
+			strcpy(buff,"entrez le nom du document:");
 			write(sockfd,buff,sizeof(buff));
 			end_message(sockfd);
+			
+			bzero(buff, sizeof(buff));
+			read(sockfd, buff, sizeof(buff));
+
+			//envoie du fichier
+			Envoyer_fichier(sockfd,buff);
+			end_message(sockfd);
+			
 			
 		}
 		
@@ -221,17 +232,70 @@ void get_files(char* chemin,char ***nom_fichier){
 	struct dirent *dir;
 	d = opendir(chemin);
 	if (d) {
-	for(int i=0; (dir = readdir(d)) != NULL; i++) {
-		
+		for(int i=0; (dir = readdir(d)) != NULL; i++) {
+			
 
-		(*nom_fichier)[i] = dir->d_name; 
+			(*nom_fichier)[i] = dir->d_name; 
 
+		}
+
+		closedir(d);
 	}
-
-	closedir(d);
-}
 }
 
+int Envoyer_fichier(int connfd, char *fname)
+{
+      
+
+	FILE *fp = fopen(fname,"rb");
+        if(fp==NULL)
+        {
+		printf("Erreur de l'ouverture du fichier \n");
+		write(connfd,"Erreur de l'ouverture du fichier",MAX);
+		return 1;   
+        } 
+
+	//Envoi signal de telechargement
+	
+	write(connfd,"TeLeCharGemEnt",MAX);
+
+	//Envoi nom du fichier
+	printf("Le nom du fichier: %s\n",fname);
+	write(connfd, fname,MAX);
+
+        /* Read data from file and send it */
+        while(1)
+        {
+            /* First read file in chunks of 256 bytes */
+            unsigned char buff[1024]={0};
+            int nread = fread(buff,1,1024,fp);
+            //printf("Bytes read %d \n", nread);        
+
+            /* If read was success, send data. */
+            if(nread > 0)
+            {
+                //printf("Sending \n");
+                write(connfd, buff, nread);
+            }
+            if (nread < 1024)
+            {
+                if (feof(fp))
+		{
+                    printf("End of file\n");
+		    printf("File transfer completed for id: %d\n",connfd);
+			
+		}
+                if (ferror(fp))
+                    printf("Error reading\n");
+		
+		
+                break;
+		
+            }
+        }
+	
+
+}
 /*
 int exec_cmd(int client_socket,char *cmd){
 //execute une commande et envoie le resultat au client
