@@ -27,8 +27,8 @@ Le programme client-server utilise les librairies suivants :
 * <dirent.h>
 
 
-#### Building for source
-For production release:
+#### Compilation
+Afin de compiler le programme :
 
 $ cd bin
 $ cmake ..
