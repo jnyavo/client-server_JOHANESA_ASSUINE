@@ -44,6 +44,7 @@ Les arguments positionnels sont comme suit :
    
 ```
 $./main client adresse port
+ou
 $./main server adresse port
 ```
 Mais il peut être lancé sans argument positionel 
