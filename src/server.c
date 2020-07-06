@@ -69,10 +69,16 @@ int server(char *addr, int port) {
 		chat_server(client_socket,&pointer, chemin);
 		printf("Attendre un autre client ?(y/n): ");
 		char continuer;
-		scanf("%c",&continuer);
 		getchar();
-		if(strncmp(&continuer,"y",1))
+		scanf("%c",&continuer);
+		
+		if(continuer == 'n'){
+		
+			printf("Deconnexion...\n");
+			
 			break;
+		}
+		
 	}
 
 	//fermeture du socket serveur
@@ -85,7 +91,7 @@ int server(char *addr, int port) {
 
 
 
-void chat_server(int sockfd, char ***nom_fichier, char *chemin) 
+int chat_server(int sockfd, char ***nom_fichier, char *chemin) 
 { 
 	//string pour les messages
 	char buff[MAX];
@@ -103,7 +109,9 @@ void chat_server(int sockfd, char ***nom_fichier, char *chemin)
 		get_files(chemin,nom_fichier);
 
 		bzero(buff, sizeof(buff)); 
-		read(sockfd, buff, sizeof(buff));
+		if(read(sockfd, buff, sizeof(buff))==0)
+			return 0;
+			
 
 		if (strcmp(buff,"ls") == 0){
 		//Envoyer la liste des documents
@@ -133,7 +141,8 @@ void chat_server(int sockfd, char ***nom_fichier, char *chemin)
 			
 			
 			bzero(buff, sizeof(buff));
-			read(sockfd, buff, sizeof(buff));
+			if(read(sockfd, buff, sizeof(buff)))
+				return 0;
 			printf("Suppression de %s \n",buff);
 			char chemin_fichier[1024];
 			strcat(chemin,"/");
@@ -163,7 +172,8 @@ void chat_server(int sockfd, char ***nom_fichier, char *chemin)
 			end_message(sockfd);
 			
 			bzero(buff, sizeof(buff));
-			read(sockfd, buff, sizeof(buff));
+			if(read(sockfd, buff, sizeof(buff))==0)
+				return 0;
 
 			
 			
@@ -234,7 +244,7 @@ int Envoyer_fichier(int connfd, char *fname,char *chemin)
 	strcpy(chemin_fichier,chemin);
 	strcat(chemin_fichier,fname);
 	printf("Chemin du fichier %s\n",chemin_fichier);
-	FILE *fp = fopen(chemin_fichier,"rb");
+	FILE *fp = fopen(chemin_fichier,"r");
         if(fp==NULL)
         {
 		printf("Erreur de l'ouverture du fichier \n");
