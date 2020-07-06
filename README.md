@@ -43,7 +43,7 @@ Pour lancer le programme il faut aller dans /bin puis lancer le main.
 Les arguments positionnels sont comme suit :
    
 ```
-main <client/server> <adresse> <port>
+$./main <client/server> <adresse> <port>
 ```
 Mais il peut être lancé sans argument positionel 
 
