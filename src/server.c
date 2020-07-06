@@ -1,55 +1,29 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <unistd.h>
-#include <string.h>
-#include <arpa/inet.h>
-#include <dirent.h>
-
-#define MAX 256
-
-void show_files(char* chemin);
-void get_files(char* chemin, char ***nom_fichier);
-void chat_server(int sockfd, char ***nom_fichier);
-void end_message(int client_socket);
-void send_help(int client_socket);
-int Envoyer_fichier(int connfd, char *fname);
+#include "server.h"
 
 //int exec_cmd(int client_socket,char *cmd);
 
-void func(int sockfd) 
-{ 
-	char buff[MAX]; 
-	int n; 
-	for (;;) { 
-		bzero(buff, sizeof(buff)); 
-		printf("Enter the string : "); 
-		n = 0; 
-		while ((buff[n++] = getchar()) != '\n') 
-			; 
-		write(sockfd, buff, sizeof(buff)); 
-		bzero(buff, sizeof(buff)); 
-		read(sockfd, buff, sizeof(buff)); 
-		printf("From Server : %s", buff); 
-		if ((strncmp(buff, "exit", 4)) == 0) { 
-			printf("Client Exit...\n"); 
-			break; 
-		} 
-	} 
-} 
+int server(char *addr, int port) {
 
-int main() {
-
-	
+	printf("SERVER\n");
 	char message[MAX] = "Bienvenue sur le serveur";
-	char * pointer_message = message; 
+	char * pointer_message = message;
+	
+	//Reperatoire par defaut des documents
+	char chemin[MAX] = "../Documents"; 
+	 
+	//liste contenant le nom des fichiers dans le repertoire
 	char  *nom_fichier[MAX]= {"test", "test"};
 	char  **pointer = nom_fichier;
 	
-	
-	get_files(".",&pointer);
+	char temp[MAX];
+	printf("le chemin vers le dossier documents (0 par defaut): ");
+	scanf("%s", temp);
+	if (strcmp(temp,"0") != 0){
+		bzero(chemin,MAX);
+		strcpy(chemin,temp);
+		bzero(temp,MAX);
+	}
+	get_files(chemin,&pointer);
 
 	//initialisation du socket serveur 
 	int serv_socket;
@@ -61,8 +35,8 @@ int main() {
 
 	//Remplissage des informations de l'adresse serveur
 	server_address.sin_family = AF_INET;
-	server_address.sin_port = htons(8080); //port 8080
-	server_address.sin_addr.s_addr = INADDR_ANY;//adresse par defaut
+	server_address.sin_port = htons(port); //port par defaut :8080
+	inet_pton(AF_INET,addr,&server_address.sin_addr.s_addr);//adresse par defaut : localhost
 
 	//liaison du socket serveur sur le port et l'addresse
 	int status = bind(serv_socket, (struct sockaddr*) &server_address, sizeof(server_address));
@@ -72,8 +46,12 @@ int main() {
 		printf("Erreur de l'initialisation du serveur \n");
 		return -1;
 	}
-
+	
+	
 	while(1){ 
+		
+		printf("Server operationel sur %s\n",inet_ntoa((struct in_addr) server_address.sin_addr));
+		printf("Port %d\n", port);
 		// mise en ecoute du serveur
 		listen(serv_socket, 5);
 		int client_socket = accept(serv_socket,(struct sockaddr*) &cli_addr, &addr_size);
@@ -88,7 +66,7 @@ int main() {
 
 		
 		//debut du chat client-server
-		chat_server(client_socket,&pointer);
+		chat_server(client_socket,&pointer, chemin);
 		printf("Attendre un autre client ?(y/n): ");
 		char continuer;
 		scanf("%c",&continuer);
@@ -107,7 +85,7 @@ int main() {
 
 
 
-void chat_server(int sockfd, char ***nom_fichier) 
+void chat_server(int sockfd, char ***nom_fichier, char *chemin) 
 { 
 	//string pour les messages
 	char buff[MAX];
@@ -122,7 +100,7 @@ void chat_server(int sockfd, char ***nom_fichier)
 	while (1) { 
 		//actualisation de la liste de documents
 		bzero(*nom_fichier,MAX);
-		get_files(".",nom_fichier);
+		get_files(chemin,nom_fichier);
 
 		bzero(buff, sizeof(buff)); 
 		read(sockfd, buff, sizeof(buff));
@@ -137,7 +115,7 @@ void chat_server(int sockfd, char ***nom_fichier)
 				continue; //Ne pas envoyer . et ..
 				bzero(buff, sizeof(buff)); 
 				strcpy(buff,(*nom_fichier)[i]);
-				printf("le fichier est: %s \n",buff);
+				printf("%s \n",buff);
 				write(sockfd,buff, sizeof(buff));
 			}
 			//Fin de message
@@ -157,7 +135,11 @@ void chat_server(int sockfd, char ***nom_fichier)
 			bzero(buff, sizeof(buff));
 			read(sockfd, buff, sizeof(buff));
 			printf("Suppression de %s \n",buff);
-			int status = remove(buff);
+			char chemin_fichier[1024];
+			strcat(chemin,"/");
+			strcpy(chemin_fichier,chemin);
+			strcat(chemin_fichier,buff);
+			int status = remove(chemin_fichier);
 			if(status == 0){
 				printf("Suppression effectuee \n");
 				strcpy(buff,"Suppression effectuee");
@@ -183,8 +165,10 @@ void chat_server(int sockfd, char ***nom_fichier)
 			bzero(buff, sizeof(buff));
 			read(sockfd, buff, sizeof(buff));
 
+			
+			
 			//envoie du fichier
-			Envoyer_fichier(sockfd,buff);
+			Envoyer_fichier(sockfd,buff,chemin);
 			end_message(sockfd);
 			
 			
@@ -243,11 +227,14 @@ void get_files(char* chemin,char ***nom_fichier){
 	}
 }
 
-int Envoyer_fichier(int connfd, char *fname)
+int Envoyer_fichier(int connfd, char *fname,char *chemin)
 {
-      
-
-	FILE *fp = fopen(fname,"rb");
+      	char chemin_fichier[1024];
+	strcat(chemin,"/");
+	strcpy(chemin_fichier,chemin);
+	strcat(chemin_fichier,fname);
+	printf("Chemin du fichier %s\n",chemin_fichier);
+	FILE *fp = fopen(chemin_fichier,"rb");
         if(fp==NULL)
         {
 		printf("Erreur de l'ouverture du fichier \n");
@@ -263,18 +250,16 @@ int Envoyer_fichier(int connfd, char *fname)
 	printf("Le nom du fichier: %s\n",fname);
 	write(connfd, fname,MAX);
 
-        /* Read data from file and send it */
+  
         while(1)
         {
-            /* First read file in chunks of 256 bytes */
+       
             unsigned char buff[1024]={0};
             int nread = fread(buff,1,1024,fp);
-            //printf("Bytes read %d \n", nread);        
-
-            /* If read was success, send data. */
+  
             if(nread > 0)
             {
-                //printf("Sending \n");
+           
                 write(connfd, buff, nread);
             }
             if (nread < 1024)
@@ -292,8 +277,7 @@ int Envoyer_fichier(int connfd, char *fname)
                 break;
 		
             }
-        }
-	
+	}
 
 }
 /*

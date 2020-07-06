@@ -1,20 +1,7 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <unistd.h>
-#include <string.h>
+#include "client.h"
+#include "server.h"
 
-#define MAX 256
-
-
-void ecouter_serv(int cli_socket);
-void chat_client(int sockfd);
-int telecharger(int sockfd, char* fname);
-  
-
-int main() {
+int client(char *addr, int port) {
 
 	printf("CLIENT \n");
 
@@ -25,8 +12,8 @@ int main() {
 	//Les informations sur le serveur
 	struct sockaddr_in server_address;
 	server_address.sin_family = AF_INET;
-	server_address.sin_port = htons(8080); //port 8080
-	server_address.sin_addr.s_addr = INADDR_ANY; // adresse par defaut
+	server_address.sin_port = htons(port); //port par defaut 8080
+	inet_pton(AF_INET,addr,&server_address.sin_addr.s_addr); // adresse par defaut
 
 	//Connection au serveur
 	printf("Connexion au server... \n");
@@ -96,8 +83,7 @@ void ecouter_serv(int cli_socket){
 		{
 			//Le serveur a communique un telechargement
 			printf("Fichier ouvert, telechargement...\n");
-			telecharger(cli_socket,message);
-			break;		
+			telecharger(cli_socket,message);	
 		
 		}
 		if (strcmp(message,"fin") == 0)
@@ -105,6 +91,7 @@ void ecouter_serv(int cli_socket){
 
 		
 		printf("\t%s\n", message); 
+
 		
 	}
 	
@@ -119,7 +106,7 @@ int telecharger(int sockfd, char* fname){
 	
 	FILE *fp;
 	read(sockfd, fname, MAX);
-	strcat(fname,"Copy");
+	strcat(fname,".copy");
 	printf("File Name: %s\n",fname);
 	printf("Reception du fichier...\n");
 	fp = fopen(fname, "ab"); 
@@ -130,11 +117,11 @@ int telecharger(int sockfd, char* fname){
 	}
 	while (1){
 	taille = read(sockfd, recvBuff, 1024);
+	printf("%s",recvBuff);
 	if (strcmp(recvBuff,"fin") == 0)
 		break; //le serveur a communique la fin d'un message
-	else
-		printf("%s",recvBuff);
-	fwrite(recvBuff, 1,taille,fp);
+		
+	fwrite(recvBuff, 1,1024,fp);
 	
 	}
 	if(taille < 0)
