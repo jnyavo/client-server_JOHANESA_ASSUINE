@@ -12,7 +12,7 @@
 #endif
 void show_files(char* chemin);
 void get_files(char* chemin, char ***nom_fichier);
-void chat_server(int sockfd, char ***nom_fichier, char *chemin);
+int chat_server(int sockfd, char ***nom_fichier, char *chemin);
 void end_message(int client_socket);
 void send_help(int client_socket);
 int Envoyer_fichier(int connfd, char *fname,char *chemin);
