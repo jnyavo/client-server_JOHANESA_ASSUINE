@@ -54,6 +54,6 @@ Mais il peut être lancé sans argument positionel
 
 ### Todos
 
- - Correction : Plantage recurrent sur l'ecriture du document sur le client 
+ - Correction : Caractères aléatoires en plus transférés par le telechargement de document
 
 
