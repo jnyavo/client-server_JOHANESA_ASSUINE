@@ -101,37 +101,41 @@ void ecouter_serv(int cli_socket){
 
 int telecharger(int sockfd, char* fname){
 	 //Creer un fichier ou l'on va stocker les donnees telecharges
-	float taille = 0;
+	int taille = 0;
+	char *ptr_taille = (char *) &taille;
 	char recvBuff[1024];
-	memset(recvBuff, '0', sizeof(recvBuff));	
+		
 	
 	FILE *fp;
 	read(sockfd, fname, MAX);
 	strcat(fname,".copy");
 	printf("File Name: %s\n",fname);
 	printf("Reception du fichier...\n");
-	fp = fopen(fname, "a"); 
+	fp = fopen(fname, "ab"); 
 	if(fp == NULL)
 	{
 		printf("Erreur d'ecriture");
 		return 1;
 	}
 	while (1){
-	printf("downloading...");
-	taille = read(sockfd, recvBuff, 1024);
-	printf("%c",recvBuff);
+	read(sockfd,ptr_taille,sizeof(int));
+	printf("La taille est %d\n",taille);
+	read(sockfd, recvBuff, taille);
+	printf("%s\n",recvBuff);
 	if (strcmp(recvBuff,"fin") == 0)
 		break; //le serveur a communique la fin du telechargement
-		
+	fflush(stdout);
 	fwrite(recvBuff, 1,1024,fp);
 	
 	}
 	if(taille < 0)
 	{
 		printf("\n Erreur de lecture \n");
+		fclose(fp);
 	}
 		else {	
 		printf("\nTelechargement reussi.\n");
+		fclose(fp);
 		}
 		
 	return 0;

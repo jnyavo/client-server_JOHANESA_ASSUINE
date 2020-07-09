@@ -182,7 +182,7 @@ int chat_server(int sockfd, char ***nom_fichier, char *chemin)
 			
 			//envoie du fichier
 			Envoyer_fichier(sockfd,buff,chemin);
-			end_message(sockfd);
+			
 			
 			
 		}
@@ -242,12 +242,12 @@ void get_files(char* chemin,char ***nom_fichier){
 
 int Envoyer_fichier(int connfd, char *fname,char *chemin)
 {
-      	char chemin_fichier[1024];
+      	char chemin_fichier[MAX];
 	strcat(chemin,"/");
 	strcpy(chemin_fichier,chemin);
 	strcat(chemin_fichier,fname);
 	printf("Chemin du fichier %s\n",chemin_fichier);
-	FILE *fp = fopen(chemin_fichier,"r");
+	FILE *fp = fopen(chemin_fichier,"rb");
         if(fp==NULL)
         {
 		printf("Erreur de l'ouverture du fichier \n");
@@ -263,16 +263,17 @@ int Envoyer_fichier(int connfd, char *fname,char *chemin)
 	printf("Le nom du fichier: %s\n",fname);
 	write(connfd, fname,MAX);
 
-  
+  	//Envoi du fichier
         while(1)
         {
        
-            unsigned char buff[1024]={0};
+            unsigned char buff[1024];
             int nread = fread(buff,1,1024,fp);
-  
+		
+  		write(connfd, (char *) &nread,sizeof(int));
             if(nread > 0)
             {
-           
+           	printf("%s\n",buff);
                 write(connfd, buff, nread);
             }
             if (nread < 1024)
@@ -281,10 +282,22 @@ int Envoyer_fichier(int connfd, char *fname,char *chemin)
 		{
                     printf("End of file\n");
 		    printf("File transfer completed for id: %d\n",connfd);
+			fclose(fp);
+			
+			char mess[] = "fin";
+			int fin = (int) sizeof(mess);
+			write(connfd, (char *) &fin,sizeof(int));
+			end_message(connfd);
 			
 		}
                 if (ferror(fp))
                     printf("Error reading\n");
+			fclose(fp);
+
+			char mess[] = "fin";
+			int fin = (int) sizeof(mess);
+			write(connfd, (char *) &fin,sizeof(int));
+			end_message(connfd);
 		
 		
                 break;
