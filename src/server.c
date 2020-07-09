@@ -141,8 +141,9 @@ int chat_server(int sockfd, char ***nom_fichier, char *chemin)
 			
 			
 			bzero(buff, sizeof(buff));
-			if(read(sockfd, buff, sizeof(buff)))
+			if(read(sockfd, buff, sizeof(buff)) == 0){
 				return 0;
+			}
 			printf("Suppression de %s \n",buff);
 			char chemin_fichier[1024];
 			strcat(chemin,"/");
@@ -172,8 +173,10 @@ int chat_server(int sockfd, char ***nom_fichier, char *chemin)
 			end_message(sockfd);
 			
 			bzero(buff, sizeof(buff));
-			if(read(sockfd, buff, sizeof(buff))==0)
+			if(read(sockfd, buff, sizeof(buff))==0){
+				printf("Erreur %s\n",buff);				
 				return 0;
+			}
 
 			
 			
