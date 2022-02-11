@@ -39,12 +39,12 @@ $ make
 ou
 
 $ gcc -I includes -o bin/main src/main.c src/client.c src/server.c
-```
+
 ### Lancement
 Pour lancer le programme il faut aller dans /bin puis lancer le main.
 Les arguments positionnels sont comme suit :
    
-```
+
 ```sh
 $./main client|server adresse port
 ``` 
