@@ -30,9 +30,11 @@ Le programme client-server utilise les librairies suivants :
 #### Compilation
 Afin de compiler le programme :
 
+```sh
 $ cd bin <br>
 $ cmake .. <br>
 $ make
+```
 
 ou
 
