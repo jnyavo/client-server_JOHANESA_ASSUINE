@@ -48,10 +48,9 @@ Les arguments positionnels sont comme suit :
 ```sh
 $./main client|server adresse port
 ``` 
-```
+
 Mais il peut être lancé sans argument positionel 
 
-```
 
 
 ### Todos
